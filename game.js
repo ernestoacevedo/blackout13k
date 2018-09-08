@@ -11,156 +11,13 @@ ctx.oImageSmoothingEnabled = false;
 ctx.strokeStyle = 'green';
 ctx.fillStyle = 'green';
 ctx.lineWidth = 5;
-//Load Sprite Sheet and create some sprites
-spriteSheet = new Image();
-spriteSheet.src = "500x500standar_alpha.png";
-spriteArray = {
-    abc: new Sprite(5, 0, 5, 5),
-    nums: new Sprite(0, 0, 5, 5),
-    punkSp: new Sprite(140, 0, 2, 5),
-    scroll: new Sprite(151, 0, 5, 5),
-    mc: new Sprite(0, 50, 20, 23),
-    enemies: new Sprite(5, 5, 34, 45),
-    items: new Sprite(0, 73, 21, 24),
-    rooms: new Sprite(0, 97, 167, 75),
-    misc: new Sprite(0, 142, 106, 34)
-};
-enemyArray = {
-    youtuber: new Enemy("youtuber", spriteArray.enemies, 0, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("youtuber tried to upload a video...")
-                });
-                eventQ.push(function () {
-                    setDialog("... but there is no internet")
-                })
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }]),
-    ratboy: new Enemy("rat boy", spriteArray.enemies, 1, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("rat boy hit you with his pixaxe")
-                });
-                eventQ.push(function () {
-                    setDialog("... but it's cardboard")
-                })
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }]),
-    instagrammer: new Enemy("instagrammer", spriteArray.enemies, 3, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("instagrammer took a selfie...")
-                });
-                eventQ.push(function () {
-                    setDialog("... but instagram is offline and nobody saw it.")
-                })
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }]),
-    rager: new Enemy("rager", spriteArray.enemies, 4, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("rager bursts into flames")
-                });
-                this.atk + 10
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }])
 
-};
-roomArray = {
-    bedroom: new Room("bedroom", "standard", 0),
-    hallway: new Room("hallway", "standard", 1, function () {
-        if (this.indexes.length < 2) {
-            var assigned = false;
-            while (!assigned) {
-                var rand = Math.random();
-                var lastIndexes = this.indexes[this.indexes.length - 1];
-                var newI = lastIndexes[0];
-                var newJ = lastIndexes[1];
-                if (rand > 0.75) {
-                    newJ -= 1
-                }
-                if (rand <= 0.75 && rand > 0.5) {
-                    newJ++
-                }
-                if (rand <= 0.5 && rand > 0.25) {
-                    newI -= 1
-                }
-                if (rand <= 0.25) {
-                    newI++
-                }
-                if (newJ >= 0 && newI >= 0 && map.mapMatrix[newI][newJ] == null) {
-                    map.insert(newI, newJ, this);
-                    assigned = true
-                }
-            }
-        }
-    }),
-    kitchen: new Room("kitchen", function () {
-    }),
-    bathroom: new Room("bathroom", function () {
-    })
-};
 
-//jsons that contain the numbers that correspond to each letter, so that the specific tile is cropped from the image.
-// TODO: THIS MUST BE REVIEWED
-abc = {
-    a: 0,
-    b: 1,
-    c: 2,
-    d: 3,
-    e: 4,
-    f: 5,
-    g: 6,
-    h: 7,
-    i: 8,
-    j: 9,
-    k: 10,
-    l: 11,
-    m: 12,
-    n: 13,
-    o: 14,
-    p: 15,
-    q: 16,
-    r: 17,
-    s: 18,
-    t: 19,
-    u: 20,
-    v: 21,
-    w: 22,
-    x: 23,
-    y: 24,
-    z: 25,
-    ask: 26
-};
-punks = JSON.parse('{".":0,"\,":1,"\:":2,"/":3,"\'":4,"!":5}');
 game = null;
 optionMenu = null;
 mapMenuActive = false;
 anim = null
+drawOpenChest = null
 window.setTimeout(function () {
     standby = true;
     game = "mainMenu";
@@ -207,24 +64,14 @@ main.addEventListener('click', function (event) {
                             standby = false;
                             mapMenuActive = true;
                             refreshGlobalDraw()
-                            // setDialog("you moved to a new room")
-                            // currentRoom = new Room("new room", currentRoom)
-                            // eventQ.push(function () {
-                            //     if (currentRoom.enemy == null) {
-                            //         switchState("explore")
-                            //     } else {
-                            //         switchState("fight")
-                            //     }
-                            // })
                         }
                         if (optB.name == "attack") {
-                            enemy_action = currentRoom.enemy.performAction();
                             order = mainC.spd >= enemy.spd ? [mainC, enemy] : [enemy, mainC];
-                            order[0].performAction("attack")();
+                            order[0].performAction("attack");
                             if (order[1].hp < 1) {
                                 order[1].performDeath()
                             } else {
-                                order[1].performAction()();
+                                order[1].performAction()
                                 if (order[0].hp < 1) {
                                     order[0].performDeath()
                                 } else {
@@ -239,7 +86,23 @@ main.addEventListener('click', function (event) {
 
                         }
                         if (optB.name == "look") {
-
+                            setDialog(currentRoom.desc)
+                            if(currentRoom.chest){
+                                drawOpenChest = 0
+                                //eventQ.insert("there is an ancient treasure chest",null)
+                                eventQ.push(function(){setDialog("there is an ancient treasure chest")})
+                                eventQ.push(function(){
+                                    currentRoom.chest = false
+                                    drawOpenChest = 1
+                                    setDialog("there was an item inside")})
+                                eventQ.push(function(){
+                                    item = itemArray.instantLunch.copy()
+                                    addItem(item)
+                                    setDialog("you get "+item.name)})
+                                eventQ.push(function(){
+                                    drawOpenChest = null
+                                    switchState("explore")})
+                            }
                         }
                         if (optB.name == "items") {
                             switchState("items")
@@ -292,14 +155,13 @@ main.addEventListener('click', function (event) {
                 optionMenu = new OptionMenu(coords.x, coords.y, ["use", "drop"], globalItemIndex);
                 refreshGlobalDraw()
             }
-            //TODO: Must review if this code should be implemented.
+
         } else if (mapMenuActive) {
             coords = getMouseCoords(event);
             if (coords.x < 200 || coords.x > 800 || coords.y < 200 || coords.y > 800) {
                 mapMenuActive = false;
-                standby = true;
                 roomOpt = []
-                refreshGlobalDraw()
+                switchState("explore")
             } else {
                 //console.log("pressed map menu")
                 //console.log("optionRoom length: "+roomOpt.length)
@@ -307,7 +169,7 @@ main.addEventListener('click', function (event) {
                     //console.log("Mouse coords: "+coords+" Room Option: "+ro)
                     if (roomOpt[i].in(coords.x, coords.y)) {
                         if (map.mapMatrix[roomOpt[i].indI][roomOpt[i].indJ] == "open") {
-                            map.insert(roomOpt[i].indI, roomOpt[i].indJ, roomArray.bedroom.getCopy());
+                            map.insert(roomOpt[i].indI, roomOpt[i].indJ, roomArray.bedroom.copy());
                         }
                         currentRoom = map.mapMatrix[roomOpt[i].indI][roomOpt[i].indJ]
                         //console.log("hit Room with index: ["+ro.indI+","+ro.indJ+"]")
@@ -324,6 +186,7 @@ main.addEventListener('click', function (event) {
                                     this.top_y -= 50
                                     this.bot_y += 50
                                     if (this.top_y <= 0) {
+                                        mainC.hunger -= 3
                                         finishAnim("you moved to a new room","explore")
                                     }
                                 }
@@ -502,30 +365,16 @@ function refreshGlobalDraw() {
         ctx.strokeStyle = "white";
         ctx.fillStyle = "white";
         ctx.strokeRect(200, 200, 600, 600);
-        var skip = [];
         for (i = 0; i < map.mapMatrix.length; i++) {
             for (j = 0; j < map.mapMatrix[i].length; j++) {
-                if (map.mapMatrix[i][j] == "closed") {
-                    ctx.strokeStyle = "red";
-                    ctx.strokeRect(115 * i + 220, 115 * j + 220, 95, 95)
-                }
-                else if (!skip.includes(JSON.stringify([i, j])) && map.mapMatrix[i][j] != null) {
+                if (map.mapMatrix[i][j] != "closed" && map.mapMatrix[i][j] != null) {
                     l = 95;
                     w = 95;
                     if (map.mapMatrix[i][j] == "open") {
                         ctx.strokeStyle = "yellow"
-                        ctx.strokeRect(115 * i + 220, 115 * j + 220, l, w)
+                        ctx.strokeRect(115 * i + 220, 115 * j + 220, w, l)
                     } else {
                         ind = map.mapMatrix[i][j].indexes;
-                        if (ind.length > 1) {
-                            console.log("index length = "+ind.length)
-                            for (k = 0; k < ind.length; k++) {
-                                if (JSON.stringify([i, j]) != JSON.stringify([ind[k][0], ind[k][1]])) {
-                                    ind[k][0] > i ? w += (w + 20) : l += (l + 20);
-                                    skip.push(JSON.stringify([ind[k][0], ind[k][1]]))
-                                }
-                            }
-                        }
                         ctx.strokeStyle = "white";
                         if (currentRoom == map.mapMatrix[i][j]) {
                             ctx.fillRect(115 * i + 220, 115 * j + 220, w, l)
@@ -555,6 +404,12 @@ function refreshGlobalDraw() {
         }
         ctx.strokeStyle = 'green';
         ctx.lineWidth = 5
+    }
+    if(drawOpenChest != null){
+        ctx.fillStyle = "black"
+        ctx.fillRect(335,335,290,215)
+        spriteArray.misc.draw(345, 350,5,{x:drawOpenChest,y:0})
+        ctx.strokeRect(335,335,290,215)
     }
     if(anim != null) anim.play()
 }
@@ -652,36 +507,24 @@ function setDialog(diag) {
 function initNewGame() {
 
     //Initializes main character
-    mainC = {
-        name: "You",
-        hp: 25,
-        totalHp: 25,
-        atk: 8,
-        def: 5,
-        spd: 5,
-        luck: 5,
-        hunger: 100,
-        sanity: 74,
-        attac: function () {
-            var dmg = mc.atk;
-            dmg += (mc.luck * 3) / 100 > Math.random() ? Math.ceil(mc.luck * 3 * mc.atk / 100) : 0;
-            eventQ.push(function () {
-                setDialog("you attack")
-            });
-            mc.hunger -= 5;
-            eventQ.push(function () {
-                setDialog(enemy.name + " received " + enemy.protecc(dmg) + " damage.")
-            });
-            console.log("You deal " + dmg + ". enemy HP: " + enemy.hp)
-        },
+    mainC = {name: "You", hp: 25, totalHp: 25, atk: 8, def: 5, spd: 5, luck: 5, hunger: 100, sanity: 74,
         protecc: function (dmg) {
-            dmg -= Math.ceil(dmg * (mc.def * 3 / 100));
-            mc.hp -= dmg;
+            dmg -= Math.ceil(dmg * (this.def * 3 / 100));
+            this.hp -= dmg;
             return dmg
         },
         performAction: function (decision) {
             if (decision == "attack") {
-                return this.attac
+                var dmg = this.atk;
+                console.log("dmg: " + dmg)
+                dmg += (this.luck * 3) / 100 > Math.random() ? Math.ceil(this.luck * 3 * this.atk / 100) : 0;
+                eventQ.push(function () {
+                    setDialog("you attack")
+                });
+                eventQ.push(function () {
+                    setDialog(enemy.name + " received " + enemy.protecc(dmg) + " damage.")
+                    this.hunger -= 5;
+                });
             }
         },
         performDeath: function () {
@@ -693,6 +536,16 @@ function initNewGame() {
             })
         }
     };
+
+    eventQ = {
+        queue: [],
+        insert: function(text,extra){
+            this.queue.push(function(text,extra){extra();setDialog(text)})
+        },
+        perform: function(){
+            this.queue.shift()()
+        }
+    }
     //Room enemy is null
     enemy = null;
     //Chest doesn't exists
@@ -709,9 +562,7 @@ function initNewGame() {
         }
     };
     //currentFloor[3][3] = new Room("your room","this is my room",1)
-    map.insert(1, 1, roomArray.bedroom.getCopy());
-    console.log(map.mapMatrix[1][1])
-    chest = {exists: false, open: 0};
+    map.insert(1, 1, roomArray.bedroom.copy());
     //There is no item name selected
     itemName = null;
     //Item Slots is initiated.
@@ -729,13 +580,10 @@ function initNewGame() {
     //Event Queue starts empty
     eventQ = [];
 
-    mBoxes = [];
-
     roomOpt = []
     //New Room is created
     currentRoom = map.mapMatrix[1][1];
     //New Mood flag is set so that the mood is determined
-    setMoodState = true;
     //Counter for next hunger check is reset.
     hunger_counter = 0;
     //You are not waiting for scroll or drawing scroll arrow
@@ -746,7 +594,7 @@ function initNewGame() {
     globalItemIndex = null;
     //You are on standby
     //Item is set.
-    addItem(new Item("instant lunch", "yummy stuff", spriteArray.instantLunch, 0, 5, 15, 0))
+    addItem(itemArray.instantLunch.copy())
     //New Box is defined
 }
 
@@ -773,5 +621,13 @@ function adjacentRoom(i, j) {
 function finishAnim(diag,state){
     anim = null
     setDialog(diag)
-    eventQ.push(function(){switchState(state)})
+    if(state == "explore"){
+        if (currentRoom.enemy != null){
+            enemy = currentRoom.enemy
+            eventQ.push(function(){switchState("fight")})
+        }else{
+            eventQ.push(function(){switchState(state)})
+        }
+    }
 }
+

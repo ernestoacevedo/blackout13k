@@ -15,6 +15,10 @@ class Item {
         mainC.hp += this.hp;
         mainC.hunger += this.hunger
     }
+
+    copy(){
+        return Object.assign(new Item(),this)
+    }
 }
 
 class Sprite {
@@ -51,17 +55,6 @@ class Sprite {
         }
     }
 }
-
-class Floor {
-    constructor() {
-        this.roomMatrix = [];
-        for (i = 0; i < 5; i++) {
-            this.roomMatrix[i] = []
-        }
-        this.roomMatrix[4][2] = roomArray.hallway
-    }
-}
-
 //Room class
 class Room {
     constructor(name, desc, mx, customInit) {
@@ -72,10 +65,17 @@ class Room {
         this.mx = mx;
         this.cInit = customInit;
         this.indexes = []
+        this.chest = false
     }
 
     init(i, j) {
         this.indexes.push([i, j]);
+        var rng = Math.random()
+        if(rng < 0.6){
+            this.enemy = enemyArray.youtuber
+        }if(rng < 0.4){
+            this.chest = true
+        }
         if (this.cInit != null) this.cInit()
         var mm = map.mapMatrix
         var assignRooms = true
@@ -89,7 +89,6 @@ class Room {
                 assignRooms = false
             }
             if(nextOpen.openRooms < 3 && Math.random() < chance){
-                console.log("should repeat this action")
                 chance -= 25
             }else{
                 assignRooms = false
@@ -110,7 +109,7 @@ class Room {
         this.roomBg.draw(0, 160, 6, {x: this.mx, y: 0})
     }
 
-    getCopy(){
+    copy(){
         let name = this.name
         let desc = this.desc
         let mx   = this.mx
@@ -119,40 +118,31 @@ class Room {
     }
 
     NextOpenAndAdjNum(i,j, mm){
-        console.log("this iteration's i"+i+" j"+j)
         var count = 0
         var retVect = null
         if(i - 1 >= 0){
-            console.log("checking if i"+(i-1)+" j"+j+" is open")
             if (mm[i - 1][j] == null && retVect == null){
-                console.log("i"+(i-1)+" j"+j+" is open")
                 retVect = [i - 1,j]
             }
             if (mm[i - 1][j] != "closed"){
                 count++
             }
         }if(j - 1 >= 0) {
-            console.log("checking if i"+i+" j"+(j-1)+" is open")
             if (mm[i][j - 1] == null && retVect == null) {
-                console.log("i"+i+" j"+(j-1)+" is open")
                 retVect = [i, j - 1]
             }
             if (mm[i][j - 1] != "closed") {
                 count++
             }
         }if(i + 1 <5) {
-            console.log("checking if i"+(i+1)+" j"+j+" is open")
             if (mm[i + 1][j] == null && retVect == null) {
-                console.log("i"+(i+1)+" j"+j+" is open")
                 retVect = [i+1,j]
             }
             if (mm[i + 1][j]  != "closed") {
                 count++
             }
         }if(j + 1 < 5){
-            console.log("checking if i"+i+" j"+(j+1)+" is open")
             if(mm[i][j+1] == null && retVect == null){
-                console.log("i"+i+" j"+(j+1)+" is open")
                 retVect = [i,j+1]
             }
             if (mm[i][j+1] == "open") {
@@ -183,8 +173,8 @@ class Enemy {
 
     //Attack method takes into consideration luck. Luck is nice.
     atacc() {
-        var dmg = this.atk;
-        dmg += (this.luck * 3) / 100 > Math.random() ? Math.ceil(this.luck * 3 * this.atk / 100) : 0;
+        var dmg = enemy.atk;
+        dmg += (enemy.luck * 3) / 100 > Math.random() ? Math.ceil(enemy.luck * 3 * enemy.atk / 100) : 0;
         eventQ.push(function () {
             setDialog(enemy.name + " attacks")
         });
@@ -198,7 +188,7 @@ class Enemy {
         var rng = Math.random();
         for (i = 0; i < this.actions.length; i++) {
             if (this.actions[i].prob > rng) {
-                return this.actions[i].funct
+                this.actions[i].funct()
             }
         }
     }
@@ -221,7 +211,14 @@ class Enemy {
     }
 
     draw() {
-        this.sprite.draw(400, 250, 6, {x: xm, y: 0})
+        this.sprite.draw(400, 250, 6, {x: this.xm, y: 0})
+    }
+
+    copy(){
+        let name = this.name
+        let actions = actions;
+        let xm = this.xm
+        return new Enemy(name, this.sprite, xm, actions)
     }
 }
 
@@ -304,7 +301,7 @@ class ItemSlot {
     }
 
     draw() {
-        if (this.item != null) this.item.sprite.draw(this.x + 9, this.y + 8, 2.5, {x: this.item.xm, y: 0});
+        if (this.item != null) this.item.sprite.draw(this.x + 8, this.y + 8, 2.5, {x: this.item.xm, y: 0});
         ctx.strokeRect(this.x, this.y, 75, 75)
     }
 }
