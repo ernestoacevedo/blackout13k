@@ -75,12 +75,10 @@ main.addEventListener('click', function (event) {
                                 if (order[0].hp < 1) {
                                     order[0].performDeath()
                                 } else {
-                                    eventQ.push(function () {
-                                        setDialog("you are fighting " + enemy.name)
-                                    })
+                                    eventQ.insert(null,"you are fighting " + enemy.name)
                                 }
                             }
-                            eventQ.shift()()
+                            eventQ.perform()
                         }
                         if (optB.name == "defend") {
 
@@ -89,19 +87,16 @@ main.addEventListener('click', function (event) {
                             setDialog(currentRoom.desc)
                             if(currentRoom.chest){
                                 drawOpenChest = 0
-                                //eventQ.insert("there is an ancient treasure chest",null)
-                                eventQ.push(function(){setDialog("there is an ancient treasure chest")})
-                                eventQ.push(function(){
+                                eventQ.insert(null,"there is an ancient treasure chest")
+                                eventQ.insert(function(){
                                     currentRoom.chest = false
-                                    drawOpenChest = 1
-                                    setDialog("there was an item inside")})
-                                eventQ.push(function(){
-                                    item = itemArray.instantLunch.copy()
-                                    addItem(item)
-                                    setDialog("you get "+item.name)})
-                                eventQ.push(function(){
+                                    drawOpenChest = 1},"there was an item inside")
+                                const item = itemArray.instantLunch.copy()
+                                eventQ.insert(function(){
+                                    addItem(item)}, "you get "+item.name)
+                                eventQ.insert(function(){
                                     drawOpenChest = null
-                                    switchState("explore")})
+                                    switchState("explore")},null)
                             }
                         }
                         if (optB.name == "items") {
@@ -127,20 +122,20 @@ main.addEventListener('click', function (event) {
                     if (optB.in(coords.x, coords.y)) {
                         if (optB.name == "use") {
                             setDialog("you used an item");
-                            eventQ.push(function () {
+                            eventQ.insert(function () {
                                 refreshGlobalDraw();
                                 standby = true
-                            });
+                            },null);
                             itemSlots[optionMenu.itemIndex].item.use();
                             itemSlots[optionMenu.itemIndex].item = null;
                             optionMenu = null
                         }
                         if (optB.name == "drop") {
                             setDialog("you dropped item");
-                            eventQ.push(function () {
+                            eventQ.insert(function () {
                                 refreshGlobalDraw();
                                 standby = true
-                            });
+                            },null);
                             itemSlots[optionMenu.itemIndex].item = null;
                             optionMenu = null
                         }
@@ -207,7 +202,7 @@ main.addEventListener('click', function (event) {
         } else if (waitForScroll) {
             waitForScroll = false;
             ctx.clearRect(895, 895, 50, 50);
-            eventQ.shift()()
+            eventQ.perform()
         }
     }
 }, false);
@@ -469,7 +464,7 @@ function globalCounter() {
             drawWords(dialog, 60, 725, 5, dontDraw--)
         }
         if (dontDraw == 0 && !waitForScroll) {
-            if (eventQ.length > 0) {
+            if (eventQ.queue.length > 0) {
                 waitForScroll = true;
                 drawScrollArrow = true
             } else {
@@ -511,36 +506,41 @@ function initNewGame() {
         protecc: function (dmg) {
             dmg -= Math.ceil(dmg * (this.def * 3 / 100));
             this.hp -= dmg;
+            this.sanity -= 7
             return dmg
         },
         performAction: function (decision) {
             if (decision == "attack") {
                 var dmg = this.atk;
-                console.log("dmg: " + dmg)
                 dmg += (this.luck * 3) / 100 > Math.random() ? Math.ceil(this.luck * 3 * this.atk / 100) : 0;
-                eventQ.push(function () {
-                    setDialog("you attack")
-                });
-                eventQ.push(function () {
-                    setDialog(enemy.name + " received " + enemy.protecc(dmg) + " damage.")
+                eventQ.insert(null,"you attack");
+                eventQ.insert(function () {
                     this.hunger -= 5;
-                });
+                },enemy.name + " received " + enemy.protecc(dmg) + " damage.")
             }
         },
         performDeath: function () {
-            eventQ.push(function () {
-                setDialog("you were killed...")
-            });
-            eventQ.push(function () {
+            eventQ.insert(null,"you were killed...");
+            eventQ.insert(function () {
                 switchState("gameover")
-            })
+            },null)
         }
     };
 
     eventQ = {
         queue: [],
-        insert: function(text,extra){
-            this.queue.push(function(text,extra){extra();setDialog(text)})
+        insert: function(extra,text){
+            const ext = extra
+            console.log(ext)
+            const txt = text
+            var fnc = function(){
+                if(ext != null){
+                    ext()
+                }
+                if(txt != null) {
+                    setDialog(txt)
+                }}
+            this.queue.push(fnc)
         },
         perform: function(){
             this.queue.shift()()
@@ -578,8 +578,6 @@ function initNewGame() {
         x_pos = 75
     }
     //Event Queue starts empty
-    eventQ = [];
-
     roomOpt = []
     //New Room is created
     currentRoom = map.mapMatrix[1][1];
@@ -624,9 +622,9 @@ function finishAnim(diag,state){
     if(state == "explore"){
         if (currentRoom.enemy != null){
             enemy = currentRoom.enemy
-            eventQ.push(function(){switchState("fight")})
+            eventQ.insert(function(){switchState("fight")},null)
         }else{
-            eventQ.push(function(){switchState(state)})
+            eventQ.insert(function(){switchState(state)},null)
         }
     }
 }

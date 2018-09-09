@@ -15,12 +15,8 @@ enemyArray = {
     youtuber: new Enemy("youtuber", spriteArray.enemies, 0, [
         {
             prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("youtuber tried to upload a video...")
-                });
-                eventQ.push(function () {
-                    setDialog("... but there is no internet")
-                })
+                eventQ.insert(null,"youtuber tried to upload a video...")
+                eventQ.insert(null,"... but there is no internet")
             }
         },
         {
@@ -28,53 +24,6 @@ enemyArray = {
                 Enemy.prototype.atacc()
             }
         }]),
-    ratboy: new Enemy("rat boy", spriteArray.enemies, 1, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("rat boy hit you with his pixaxe")
-                });
-                eventQ.push(function () {
-                    setDialog("... but it's cardboard")
-                })
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }]),
-    instagrammer: new Enemy("instagrammer", spriteArray.enemies, 3, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("instagrammer took a selfie...")
-                });
-                eventQ.push(function () {
-                    setDialog("... but instagram is offline and nobody saw it.")
-                })
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }]),
-    rager: new Enemy("rager", spriteArray.enemies, 4, [
-        {
-            prob: 0.3, funct: function () {
-                eventQ.push(function () {
-                    setDialog("rager bursts into flames")
-                });
-                this.atk + 10
-            }
-        },
-        {
-            prob: 1.0, funct: function () {
-                Enemy.prototype.atacc()
-            }
-        }])
-
 };
 roomArray = {
     bedroom: new Room("bedroom", "just your standard bedroom", 0),

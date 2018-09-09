@@ -175,13 +175,8 @@ class Enemy {
     atacc() {
         var dmg = enemy.atk;
         dmg += (enemy.luck * 3) / 100 > Math.random() ? Math.ceil(enemy.luck * 3 * enemy.atk / 100) : 0;
-        eventQ.push(function () {
-            setDialog(enemy.name + " attacks")
-        });
-        eventQ.push(function () {
-            setDialog("you received " + mainC.protecc(dmg) + " damage.")
-        });
-        console.log("Enemy deals " + dmg + ". Your HP: " + mainC.hp)
+        eventQ.insert(null,enemy.name + " attacks")
+        eventQ.insert(null,"you received " + mainC.protecc(dmg) + " damage.")
     }
 
     performAction() {
@@ -202,12 +197,8 @@ class Enemy {
 
     performDeath() {
         var name = this.name;
-        eventQ.push(function () {
-            setDialog(name + " was defeated")
-        });
-        eventQ.push(function () {
-            switchState("explore")
-        })
+        eventQ.insert(null,name + " was defeated")
+        eventQ.insert(function(){switchState("explore")},null)
     }
 
     draw() {
