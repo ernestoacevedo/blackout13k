@@ -82,7 +82,7 @@ class Room {
         var chance = 0.60
         while(assignRooms){
             var nextOpen = this.NextOpenAndAdjNum(i,j,mm)
-            console.log(nextOpen)
+            //console.log(nextOpen)
             if (nextOpen.nextToAsign != null){
                 mm[nextOpen.nextToAsign[0]][nextOpen.nextToAsign[1]] = "open"
             }else{
@@ -184,6 +184,7 @@ class Enemy {
         for (i = 0; i < this.actions.length; i++) {
             if (this.actions[i].prob > rng) {
                 this.actions[i].funct()
+                return
             }
         }
     }

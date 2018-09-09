@@ -75,13 +75,16 @@ main.addEventListener('click', function (event) {
                                 if (order[0].hp < 1) {
                                     order[0].performDeath()
                                 } else {
-                                    eventQ.insert(null,"you are fighting " + enemy.name)
+                                    eventQ.insert(function(){switchState("fight")},null)
                                 }
                             }
                             eventQ.perform()
                         }
                         if (optB.name == "defend") {
-
+                            mainC.performAction("defend")
+                            enemy.performAction()
+                            mainC.hp < 1 ? mainC.performDeath() : eventQ.insert(function(){switchState("fight")},null)
+                            eventQ.perform()
                         }
                         if (optB.name == "look") {
                             setDialog(currentRoom.desc)
@@ -243,7 +246,9 @@ function switchState(name) {
         refreshGlobalDraw()
     }
     if (name == "fight") {
-        setDialog("you encounter " + currentRoom.enemy.name)
+        setDialog("you are fighting "+enemy.name)
+        if(mainC.defMod > 0) mainC.defMod = 0
+        if(mainC.atkMod > 0) mainC.atkMod = 0
     }
     if (name == "gameover") {
         dialog = null;
@@ -502,9 +507,10 @@ function setDialog(diag) {
 function initNewGame() {
 
     //Initializes main character
-    mainC = {name: "You", hp: 25, totalHp: 25, atk: 8, def: 5, spd: 5, luck: 5, hunger: 100, sanity: 74,
+    mainC = {hp: 25, totalHp: 25, atk: 8, def: 5, spd: 5, luck: 5, hunger: 100, sanity: 74, defMod: 0, atkMod: 0,
         protecc: function (dmg) {
-            dmg -= Math.ceil(dmg * (this.def * 3 / 100));
+            console.log("damage done: "+dmg+" mainC def: "+this.def+" mainC defModifier:" +this.defMod)
+            dmg -= Math.ceil(dmg * ((this.def+this.defMod) * 3 / 100));
             this.hp -= dmg;
             this.sanity -= 7
             return dmg
@@ -515,8 +521,12 @@ function initNewGame() {
                 dmg += (this.luck * 3) / 100 > Math.random() ? Math.ceil(this.luck * 3 * this.atk / 100) : 0;
                 eventQ.insert(null,"you attack");
                 eventQ.insert(function () {
-                    this.hunger -= 5;
+                    mainC.hunger -= 5;
                 },enemy.name + " received " + enemy.protecc(dmg) + " damage.")
+            }
+            if (decision == "defend"){
+                this.defMod += this.def
+                eventQ.insert(null,"you defend")
             }
         },
         performDeath: function () {
@@ -531,7 +541,6 @@ function initNewGame() {
         queue: [],
         insert: function(extra,text){
             const ext = extra
-            console.log(ext)
             const txt = text
             var fnc = function(){
                 if(ext != null){
@@ -622,7 +631,7 @@ function finishAnim(diag,state){
     if(state == "explore"){
         if (currentRoom.enemy != null){
             enemy = currentRoom.enemy
-            eventQ.insert(function(){switchState("fight")},null)
+            eventQ.insert(function(){switchState("fight")},"you encounter " + currentRoom.enemy.name)
         }else{
             eventQ.insert(function(){switchState(state)},null)
         }
